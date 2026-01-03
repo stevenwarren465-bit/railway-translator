@@ -1,0 +1,18 @@
+{
+  "name": "railway-translator",
+  "version": "1.0.0",
+  "description": "Real-time phone translation using Twilio Media Streams and Azure Speech",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "22.x"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.16.0",
+    "microsoft-cognitiveservices-speech-sdk": "^1.38.0",
+    "twilio": "^5.0.0"
+  }
+}
