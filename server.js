@@ -81,6 +81,9 @@ wss.on('connection', (ws) => {
             AZURE_SPEECH_REGION
           );
           
+          console.log(`Azure Speech configured: Region=${AZURE_SPEECH_REGION}`);
+          console.log(`Azure Key present: ${AZURE_SPEECH_KEY ? 'Yes' : 'No'}`);
+          
           // Spanish caller → English for you
           speechConfig.speechRecognitionLanguage = 'es-ES';
           speechConfig.addTargetLanguage('en');
@@ -116,8 +119,13 @@ wss.on('connection', (ws) => {
           };
           
           translator.startContinuousRecognitionAsync(
-            () => console.log('Recognition started'),
-            (err) => console.error('Recognition error:', err)
+            () => {
+              console.log('✅ Azure Speech recognition started successfully');
+            },
+            (err) => {
+              console.error('❌ Recognition start error:', err);
+              console.error('Error details:', JSON.stringify(err, null, 2));
+            }
           );
           break;
           
