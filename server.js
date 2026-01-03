@@ -5,7 +5,7 @@ const sdk = require('microsoft-cognitiveservices-speech-sdk');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const wss = new WebSocket.Server({ noServer: true });
 
 const PORT = process.env.PORT || 3000;
 
@@ -193,6 +193,19 @@ function mulawToPcm16(mulawData) {
   
   return pcmBuffer;
 }
+
+// Handle WebSocket upgrade for /media-stream path
+server.on('upgrade', (request, socket, head) => {
+  console.log('WebSocket upgrade request for:', request.url);
+  
+  if (request.url === '/media-stream') {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  } else {
+    socket.destroy();
+  }
+});
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
