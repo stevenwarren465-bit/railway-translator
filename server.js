@@ -90,6 +90,7 @@ wss.on('connection', (ws) => {
           
           // Handle recognized translations
           translator.recognized = (s, e) => {
+            console.log(`Recognition event - Reason: ${e.result.reason}`);
             if (e.result.reason === sdk.ResultReason.TranslatedSpeech) {
               const spanish = e.result.text;
               const english = e.result.translations.get('en');
@@ -98,12 +99,20 @@ wss.on('connection', (ws) => {
               console.log(`English: ${english}`);
               
               // TODO: Synthesize English audio and send back
-              // This is the complex part that needs audio format handling
+            } else if (e.result.reason === sdk.ResultReason.NoMatch) {
+              console.log('No speech recognized');
             }
           };
           
           translator.recognizing = (s, e) => {
             console.log(`Recognizing: ${e.result.text}`);
+          };
+          
+          translator.canceled = (s, e) => {
+            console.error(`Recognition CANCELED: ${e.reason}`);
+            if (e.reason === sdk.CancellationReason.Error) {
+              console.error(`Error: ${e.errorDetails}`);
+            }
           };
           
           translator.startContinuousRecognitionAsync(
@@ -116,12 +125,14 @@ wss.on('connection', (ws) => {
           if (pushStream && msg.media.payload) {
             // Twilio sends mulaw audio, base64 encoded
             const audioData = Buffer.from(msg.media.payload, 'base64');
+            console.log(`Received ${audioData.length} bytes of audio from track: ${msg.media.track}`);
             
             // Convert mulaw to PCM16
             const pcmData = mulawToPcm16(audioData);
             
             // Push to Azure Speech
             pushStream.write(pcmData);
+            console.log(`Pushed ${pcmData.length} bytes to Azure Speech`);
           }
           break;
           
@@ -196,13 +207,19 @@ function mulawToPcm16(mulawData) {
 
 // Handle WebSocket upgrade for /media-stream path
 server.on('upgrade', (request, socket, head) => {
-  console.log('WebSocket upgrade request for:', request.url);
+  const pathname = request.url;
+  console.log('=== WEBSOCKET UPGRADE ===');
+  console.log('Path:', pathname);
+  console.log('Headers:', request.headers);
   
-  if (request.url === '/media-stream') {
+  if (pathname === '/media-stream') {
+    console.log('Accepting WebSocket connection');
     wss.handleUpgrade(request, socket, head, (ws) => {
+      console.log('WebSocket upgrade successful!');
       wss.emit('connection', ws, request);
     });
   } else {
+    console.log('Rejecting - wrong path:', pathname);
     socket.destroy();
   }
 });
