@@ -20,18 +20,29 @@ app.get('/', (req, res) => {
 
 // Twilio voice webhook - returns TwiML to start Media Stream
 app.post('/voice', express.urlencoded({ extended: false }), (req, res) => {
+  console.log('=== INCOMING CALL ===');
+  console.log('From:', req.body.From);
+  console.log('To:', req.body.To);
+  console.log('Host:', req.get('host'));
+  
   const from = req.body.From;
+  const host = req.get('host');
+  const wsUrl = `wss://${host}/media-stream`;
+  
+  console.log('WebSocket URL:', wsUrl);
   
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="Polly.Joanna">Welcome to A A Texas translation service. Connecting you now.</Say>
   <Start>
-    <Stream url="wss://${req.get('host')}/media-stream" track="both_tracks"/>
+    <Stream url="${wsUrl}" track="both_tracks"/>
   </Start>
   <Dial timeout="30" callerId="${from}">
     <Number>+12145874121</Number>
   </Dial>
 </Response>`;
+  
+  console.log('Sending TwiML:', twiml);
   
   res.type('text/xml');
   res.send(twiml);
